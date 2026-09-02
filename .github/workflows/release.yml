@@ -1,4 +1,4 @@
-name: Build and Release RedCloud Android
+name: Build and Release RedCloud Android TV
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Multi-Architecture APKs
+    name: Build Multi-Architecture TV APKs
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +23,7 @@ jobs:
         run: |
           TAG_NAME="${GITHUB_REF#refs/tags/}"
           echo "VERSION=${TAG_NAME}" >> $GITHUB_OUTPUT
-          echo "[*] Releasing version: ${TAG_NAME}"
+          echo "[*] Releasing TV version: ${TAG_NAME}"
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -55,27 +55,26 @@ jobs:
           mkdir -p assets/tor
           curl -sL "https://gitlab.torproject.org/tpo/core/tor/-/raw/main/src/config/geoip" -o assets/tor/geoip
           curl -sL "https://gitlab.torproject.org/tpo/core/tor/-/raw/main/src/config/geoip6" -o assets/tor/geoip6
-          ls -la android/app/src/main/jniLibs/
 
       - name: Install Flutter Dependencies
         run: flutter pub get
 
-      - name: Build Universal APK
+      - name: Build Universal TV APK
         run: |
-          echo "[*] Building Universal APK..."
+          echo "[*] Building Universal TV APK..."
+          VERSION_TAG="${{ steps.get_version.outputs.VERSION }}"
           flutter build apk --release --android-skip-build-dependency-validation
           mkdir -p release_apks
-          VERSION_TAG="${{ steps.get_version.outputs.VERSION }}"
-          cp build/app/outputs/flutter-apk/app-release.apk release_apks/RedCloud-${VERSION_TAG}-Universal.apk
+          cp build/app/outputs/flutter-apk/app-release.apk release_apks/RedCloud-TV-${VERSION_TAG}-Universal.apk
 
-      - name: Build ABI-Split APKs
+      - name: Build ABI-Split TV APKs
         run: |
-          echo "[*] Building Split-per-ABI APKs..."
-          flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
+          echo "[*] Building Split-per-ABI TV APKs..."
           VERSION_TAG="${{ steps.get_version.outputs.VERSION }}"
+          flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
           
-          [ -f build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ] && cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release_apks/RedCloud-${VERSION_TAG}-arm64-v8a.apk || true
-          [ -f build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ] && cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release_apks/RedCloud-${VERSION_TAG}-armeabi-v7a.apk || true
+          [ -f build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ] && cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release_apks/RedCloud-TV-${VERSION_TAG}-arm64-v8a.apk || true
+          [ -f build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ] && cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release_apks/RedCloud-TV-${VERSION_TAG}-armeabi-v7a.apk || true
 
       - name: Generate Checksums
         run: |
@@ -87,23 +86,25 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: "RedCloud VPN ${{ steps.get_version.outputs.VERSION }}"
+          name: "RedCloud VPN for Android TV ${{ steps.get_version.outputs.VERSION }}"
           files: |
             release_apks/*.apk
             release_apks/SHA256SUMS.txt
           body: |
-            ## 🛡️ انتشار نسخه پایدار RedCloud VPN (${{ steps.get_version.outputs.VERSION }})
+            ## 📺 انتشار نسخه اختصاصی RedCloud VPN برای Android TV (${{ steps.get_version.outputs.VERSION }})
             
-            ### 📥 راهنمای فایل‌های دانلود:
-            * 📱 **RedCloud-${{ steps.get_version.outputs.VERSION }}-Universal.apk** : نسخه پیشنهادی (سازگار با تمامی گوشی‌ها اعم از ۳۲ بیتی و ۶۴ بیتی).
-            * ⚡ **RedCloud-${{ steps.get_version.outputs.VERSION }}-arm64-v8a.apk** : مخصوص گوشی‌های مدرن ۶۴ بیتی.
-            * 📦 **RedCloud-${{ steps.get_version.outputs.VERSION }}-armeabi-v7a.apk** : مخصوص گوشی‌های قدیمی ۳۲ بیتی.
+            نسخه بهینه‌سازی‌شده برای تلویزیون‌های هوشمند، تی‌وی‌باکس‌ها و اندروید باکس‌ها ⚡️
+            
+            ### 📥 فایل‌های دانلود:
+            * 📺 **RedCloud-TV-${{ steps.get_version.outputs.VERSION }}-Universal.apk** : نسخه پیشنهادی و همه‌منظوره (قابل نصب روی ۱۰۰٪ تلویزیون‌ها).
+            * ⚡ **RedCloud-TV-${{ steps.get_version.outputs.VERSION }}-arm64-v8a.apk** : مخصوص تلویزیون‌ها و تی‌وی‌باکس‌های مدرن ۶۴ بیتی.
+            * 📦 **RedCloud-TV-${{ steps.get_version.outputs.VERSION }}-armeabi-v7a.apk** : مخصوص تلویزیون‌ها و اندروید باکس‌های ۳۲ بیتی.
             
             ---
-            ### ✨ تغییرات نسخه جدید:
-            * 🚀 حل کامل مشکل باز شدن سایت‌ها و رفع بن‌بست DNS در حالت داشبورد
-            * 🔋 پایداری دائمی و جلوگیری از قطع شدن اتصال با بستن برنامه از تسک منیجر (دکمه مربع)
-            * 📱 پشتیبانی کامل از گوشی‌های ۳۲ بیتی برای تمام تب‌ها
+            ### ✨ ویژگی‌های نسخه تلویزیون:
+            * 🎮 سازگاری ۱۰۰٪ با ریموت کنترل تلویزیون (D-Pad Navigation)
+            * 📺 رابط کاربری تمام‌صفحه و افقی (Landscape)
+            * 🚀 پشتیبانی از تمامی هسته‌های V2Ray، Aether و Tor over MASQUE
             
             📢 **کانال اطلاع‌رسانی:** [@DevTaha_project](https://t.me/DevTaha_project)
           draft: false
